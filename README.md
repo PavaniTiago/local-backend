@@ -1,53 +1,35 @@
 # Desafio Local Server - Backend API
 
-Backend API para gerenciamento de locais (pontos de interesse) construído com **NestJS**, **Drizzle ORM**, **PostgreSQL** seguindo princípios de **Domain-Driven Design (DDD)** e **Clean Code**.
+Backend API para gerenciamento de locais (pontos de interesse) construído com NestJS, Drizzle ORM e PostgreSQL, seguindo princípios de Domain-Driven Design (DDD) e Clean Architecture.
 
-## 🏗️ Arquitetura
+## Índice
 
-Este projeto implementa uma arquitetura DDD em camadas:
+- [Tecnologias](#tecnologias)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação e Configuração](#instalação-e-configuração)
+- [Executando a Aplicação](#executando-a-aplicação)
+- [Arquitetura e Decisões de Design](#arquitetura-e-decisões-de-design)
+- [API Endpoints](#api-endpoints)
+- [Database](#database)
+- [Testes](#testes)
+- [Deploy](#deploy)
 
-- **Domain Layer**: Entidades e regras de negócio puras (sem dependências externas)
-- **Application Layer**: Casos de uso e DTOs
-- **Infrastructure Layer**: Implementações técnicas (database, HTTP, etc.)
-- **Shared Layer**: Utilitários e constantes compartilhadas
+## Tecnologias
 
-### Estrutura de Pastas
-
-```
-src/
-├── domain/              # Lógica de negócio pura
-│   ├── entities/        # Entidades do domínio
-│   └── repositories/    # Interfaces dos repositórios
-├── application/         # Casos de uso
-│   ├── use-cases/       # Implementação dos casos de uso
-│   └── dto/             # Data Transfer Objects
-├── infrastructure/      # Camada técnica
-│   ├── database/        # Configuração do banco e repositórios
-│   │   ├── drizzle/     # Schema e migrations do Drizzle
-│   │   ├── mappers/     # Conversão domain ↔ database
-│   │   └── repositories/ # Implementações dos repositórios
-│   └── http/            # Controllers e módulos HTTP
-└── shared/              # Código compartilhado
-    ├── constants/       # Tokens de injeção de dependência
-    └── exceptions/      # Exceções customizadas
-```
-
-## 🚀 Tecnologias
-
-- **NestJS** - Framework Node.js progressivo
-- **TypeScript** - Linguagem com tipagem estática
-- **Drizzle ORM** - ORM type-safe e performático
+- **NestJS** - Framework Node.js progressivo para construção de aplicações server-side escaláveis
+- **TypeScript** - Linguagem com tipagem estática para maior segurança e produtividade
+- **Drizzle ORM** - ORM type-safe e performático para PostgreSQL
 - **PostgreSQL** - Banco de dados relacional
-- **class-validator** - Validação de DTOs
-- **class-transformer** - Transformação de objetos
+- **class-validator** - Validação de DTOs na camada de aplicação
+- **class-transformer** - Transformação de objetos entre camadas
 
-## 📋 Pré-requisitos
+## Pré-requisitos
 
-- Node.js 18+
+- Node.js 18 ou superior
 - pnpm (gerenciador de pacotes)
-- PostgreSQL 14+ (local ou Render.com)
+- PostgreSQL 14 ou superior (local ou em serviço cloud)
 
-## ⚙️ Configuração
+## Instalação e Configuração
 
 ### 1. Instalar dependências
 
@@ -57,13 +39,7 @@ pnpm install
 
 ### 2. Configurar variáveis de ambiente
 
-Copie o arquivo `.env.example` para `.env`:
-
-```bash
-cp .env.example .env
-```
-
-Edite o `.env` com suas configurações:
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
 ```env
 NODE_ENV=development
@@ -106,7 +82,7 @@ pnpm db:migrate
 pnpm db:push
 ```
 
-## 🏃 Executando a aplicação
+## Executando a Aplicação
 
 ### Desenvolvimento (com hot-reload)
 
@@ -126,7 +102,147 @@ pnpm run build
 pnpm run start:prod
 ```
 
-## 📚 API Endpoints
+## Arquitetura e Decisões de Design
+
+Este projeto implementa uma arquitetura em camadas baseada em Domain-Driven Design (DDD) e Clean Architecture, garantindo separação de responsabilidades, testabilidade e manutenibilidade.
+
+### Estrutura de Camadas
+
+O projeto está organizado em quatro camadas principais:
+
+```
+src/
+├── domain/              # Camada de Domínio - Lógica de negócio pura
+│   ├── entities/        # Entidades do domínio com regras de negócio
+│   ├── value-objects/   # Objetos de valor imutáveis
+│   ├── exceptions/      # Exceções específicas do domínio
+│   └── repositories/    # Interfaces dos repositórios (contratos)
+├── application/         # Camada de Aplicação - Casos de uso
+│   ├── use-cases/       # Implementação dos casos de uso
+│   └── dto/             # Data Transfer Objects para entrada/saída
+├── infrastructure/      # Camada de Infraestrutura - Detalhes técnicos
+│   ├── database/        # Implementações de persistência
+│   │   ├── drizzle/     # Schema e migrations do Drizzle
+│   │   ├── mappers/     # Conversão entre domain entities e database models
+│   │   └── repositories/ # Implementações concretas dos repositórios
+│   └── http/            # Controllers e módulos HTTP
+└── shared/              # Código compartilhado entre camadas
+    ├── constants/       # Tokens de injeção de dependência
+    ├── exceptions/      # Exceções compartilhadas
+    └── types/           # Tipos utilitários (Result, Either)
+```
+
+### Decisões Arquiteturais
+
+#### 1. Domain-Driven Design (DDD)
+
+**Por que DDD?**
+- Separação clara entre lógica de negócio e detalhes técnicos
+- Facilita a comunicação entre desenvolvedores e stakeholders através de linguagem ubíqua
+- Entidades ricas que encapsulam regras de negócio, não apenas dados
+
+**Implementação:**
+- **Entities**: A entidade `Local` encapsula todas as regras de negócio relacionadas a locais (validação de nome, descrição, coordenadas, etc.)
+- **Value Objects**: Objetos imutáveis como `Coordinates`, `ImageUrl` e `LocalId` garantem invariantes do domínio
+- **Repository Pattern**: Interfaces no domínio (`ILocaisRepository`) definem contratos, enquanto implementações ficam na infraestrutura
+
+#### 2. Clean Architecture
+
+**Por que Clean Architecture?**
+- Independência de frameworks: o domínio não conhece NestJS, Drizzle ou PostgreSQL
+- Testabilidade: fácil testar lógica de negócio sem dependências externas
+- Flexibilidade: trocar banco de dados ou framework sem impactar o domínio
+
+**Fluxo de Dependências:**
+```
+Infrastructure → Application → Domain
+```
+
+A camada de domínio não depende de nenhuma outra camada, garantindo que regras de negócio permaneçam puras e testáveis.
+
+#### 3. Result Pattern (Functional Error Handling)
+
+**Por que Result Pattern?**
+- Tratamento explícito de erros sem exceções não tratadas
+- Type-safety: TypeScript força o tratamento de casos de erro
+- Código mais previsível e fácil de rastrear
+
+**Implementação:**
+Todas as operações que podem falhar retornam `Result<T>`, que pode ser `success(value)` ou `failure(error)`. Isso força o desenvolvedor a tratar erros explicitamente.
+
+#### 4. Mapper Pattern
+
+**Por que Mappers?**
+- Separação entre modelos de domínio e modelos de persistência
+- Domínio não conhece detalhes do banco de dados
+- Facilita mudanças no schema sem impactar o domínio
+
+**Implementação:**
+A classe `LocalMapper` converte entre `Local` (entidade de domínio) e `LocalDbModel` (modelo do banco). Isso permite que o domínio use tipos próprios (como `LocalId`, `Coordinates`) enquanto o banco usa tipos primitivos.
+
+#### 5. Dependency Injection
+
+**Por que DI?**
+- Inversão de controle: dependências são injetadas, não criadas
+- Facilita testes: fácil mockar dependências
+- Baixo acoplamento entre componentes
+
+**Implementação:**
+Uso do sistema de DI do NestJS com tokens customizados (`LOCAIS_REPOSITORY`) para injetar implementações de repositórios nos casos de uso.
+
+#### 6. Use Cases (Application Layer)
+
+**Por que Use Cases?**
+- Um caso de uso por operação de negócio
+- Orquestração clara: casos de uso coordenam entidades e repositórios
+- Fácil de testar e entender o fluxo da aplicação
+
+**Implementação:**
+Cada operação (criar, buscar, atualizar, deletar) tem seu próprio caso de uso, que:
+1. Recebe um DTO validado
+2. Cria/reconstrói entidades do domínio
+3. Chama o repositório
+4. Retorna um DTO de resposta
+
+#### 7. Value Objects
+
+**Por que Value Objects?**
+- Encapsulamento de invariantes (ex: coordenadas válidas, URLs válidas)
+- Reutilização de lógica (ex: cálculo de distância entre coordenadas)
+- Type-safety: não é possível criar um `Coordinates` inválido
+
+**Implementação:**
+- `Coordinates`: valida latitude (-90 a 90) e longitude (-180 a 180), calcula distâncias
+- `ImageUrl`: valida formato de URL
+- `LocalId`: encapsula UUID com validação
+
+#### 8. DTOs com Validação
+
+**Por que DTOs?**
+- Validação na camada de entrada (HTTP)
+- Contratos claros de API
+- Transformação de dados entre camadas
+
+**Implementação:**
+DTOs usam `class-validator` para validação automática via `ValidationPipe` do NestJS, garantindo que apenas dados válidos cheguem aos casos de uso.
+
+### Princípios SOLID Aplicados
+
+- **Single Responsibility**: Cada classe tem uma única responsabilidade (entidade, caso de uso, repositório, mapper)
+- **Open/Closed**: Fácil estender funcionalidades sem modificar código existente (novos casos de uso, novos repositórios)
+- **Liskov Substitution**: Implementações de repositórios são intercambiáveis
+- **Interface Segregation**: Interfaces específicas (`ILocaisRepository`) ao invés de interfaces genéricas
+- **Dependency Inversion**: Dependências de abstrações (interfaces) ao invés de implementações concretas
+
+### Benefícios da Arquitetura
+
+1. **Testabilidade**: Domínio testável sem mocks complexos
+2. **Manutenibilidade**: Mudanças isoladas em camadas específicas
+3. **Escalabilidade**: Fácil adicionar novos casos de uso e funcionalidades
+4. **Clareza**: Estrutura clara facilita onboarding de novos desenvolvedores
+5. **Flexibilidade**: Trocar tecnologias (ORM, banco, framework) sem impactar o domínio
+
+## API Endpoints
 
 ### Locais
 
@@ -163,7 +279,7 @@ pnpm run start:prod
 }
 ```
 
-## 🗃️ Database
+## Database
 
 ### Comandos Drizzle
 
@@ -192,7 +308,7 @@ pnpm db:studio
 | longitude | double precision | NOT NULL |
 | imagem | text | NOT NULL |
 
-## 🧪 Testes
+## Testes
 
 ```bash
 # Testes unitários
@@ -208,19 +324,9 @@ pnpm run test:e2e
 pnpm run test:cov
 ```
 
-## 🎨 Code Quality
+## Deploy
 
-```bash
-# Lint com auto-fix
-pnpm run lint
-
-# Format com Prettier
-pnpm run format
-```
-
-## 🚢 Deploy no Render.com
-
-### Opção 1: Deploy Manual (Recomendado para iniciantes)
+### Deploy no Render.com
 
 #### Passo 1: Criar PostgreSQL Database
 
@@ -242,7 +348,7 @@ pnpm run format
 4. Configure:
    - **Name**: `desafio-locais-api`
    - **Runtime**: Node
-   - **Build Command**: `pnpm install && pnpm run build:prod`
+   - **Build Command**: `pnpm install && pnpm run build`
    - **Start Command**: `pnpm run start:prod`
    - **Instance Type**: Free
 
@@ -263,92 +369,53 @@ FRONTEND_URL_PRODUCTION=https://seu-frontend.vercel.app
 1. Clique em **"Create Web Service"**
 2. Render irá:
    - Instalar as dependências
-   - Executar as migrations automaticamente (via `build:prod`)
    - Compilar o TypeScript
    - Iniciar o servidor
 
-#### Passo 5: Testar
+**Nota**: Execute as migrations manualmente após o primeiro deploy:
 
-Após o deploy, acesse:
+```bash
+pnpm db:migrate
 ```
-https://desafio-locais-api.onrender.com/locais
-```
 
-### Opção 2: Deploy com render.yaml (Blueprint)
+#### Troubleshooting no Render
 
-1. Commit o arquivo `render.yaml` no seu repositório
-2. No Render, clique em **"New +"** → **"Blueprint"**
-3. Conecte ao repositório
-4. O Render criará automaticamente:
-   - PostgreSQL Database
-   - Web Service
-   - Todas as configurações necessárias
-
-### Troubleshooting no Render
-
-#### Erro de conexão com o banco:
+**Erro de conexão com o banco:**
 - Verifique se a `DATABASE_URL` está usando a **Internal Database URL**, não a External
 - Aguarde alguns minutos após criar o database antes de fazer deploy
 
-#### Migrations não rodaram:
-- Verifique os logs do build
+**Migrations não rodaram:**
 - Execute manualmente: `pnpm db:migrate` localmente apontando para o banco do Render
 
-#### Servidor não inicia:
+**Servidor não inicia:**
 - Verifique se todas as variáveis de ambiente estão configuradas
 - Confira os logs em "Logs" no dashboard do Render
 
-## 🏛️ Princípios Arquiteturais
+## Validações
 
-### Domain-Driven Design (DDD)
+### DTOs
+Validação de formato e tipos com `class-validator` na camada de aplicação.
 
-- **Entities**: Objetos com identidade única (`Local`)
-- **Repositories**: Interfaces para persistência (padrão Repository)
-- **Use Cases**: Um caso de uso por operação de negócio
-- **Dependency Inversion**: Domain não depende de Infrastructure
-
-### Clean Code
-
-- **Single Responsibility**: Cada classe/função tem uma responsabilidade
-- **Dependency Injection**: Todas as dependências injetadas via construtor
-- **Type Safety**: TypeScript usado ao máximo para segurança de tipos
-- **Separation of Concerns**: Camadas bem definidas e desacopladas
-- **SOLID Principles**: Aplicados em toda a arquitetura
-
-### Padrões Utilizados
-
-- **Repository Pattern**: Abstração da camada de dados
-- **Mapper Pattern**: Conversão entre domain entities e database models
-- **DTO Pattern**: Validação e transformação de dados de entrada/saída
-- **Dependency Injection**: Inversão de controle com NestJS DI container
-
-## 📖 Documentação Adicional
-
-- [CLAUDE.md](./CLAUDE.md) - Guia completo da arquitetura para Claude Code
-- [NestJS Documentation](https://docs.nestjs.com)
-- [Drizzle ORM Documentation](https://orm.drizzle.team)
-
-## 📝 Notas de Desenvolvimento
-
-### Validações
-
-- **DTOs**: Validação de formato e tipos com `class-validator`
-- **Domain Entities**: Validação de regras de negócio
+### Domain Entities
+Validação de regras de negócio na camada de domínio:
   - Latitude: -90 a 90
   - Longitude: -180 a 180
   - URL válida para imagem
-  - Nome obrigatório
+- Nome obrigatório (mínimo 3 caracteres, máximo 100)
+- Descrição obrigatória (máximo 500 caracteres)
 
-### CORS
+## CORS
 
 Configurado para aceitar requisições de:
 - `http://localhost:3000` (desenvolvimento)
 - URL configurada em `FRONTEND_URL_PRODUCTION`
 
-## 🤝 Contribuindo
+## Documentação Adicional
 
-Este é um projeto de desafio técnico. Veja o arquivo de requisitos para detalhes sobre funcionalidades implementadas.
+- [CLAUDE.md](./CLAUDE.md) - Guia completo da arquitetura para Claude Code
+- [NestJS Documentation](https://docs.nestjs.com)
+- [Drizzle ORM Documentation](https://orm.drizzle.team)
 
-## 📄 Licença
+## Licença
 
 UNLICENSED - Projeto de desafio técnico
